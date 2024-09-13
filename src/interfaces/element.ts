@@ -1,6 +1,7 @@
 export interface Element {
     text: string;
     image: string;
+    value: number;
     discovered: boolean;
 }
 

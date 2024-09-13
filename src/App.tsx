@@ -14,20 +14,24 @@ export default function Home() {
   const [activeElement, setActiveElement] = useState<Element | null>(null);
   const [activePlacedElement, setActivePlacedElement] =
     useState<PlacedElement | null>(null);
+  const [remainingSteps, setRemainingSteps] = useState<number | null>(null);
+  const [totalValue, setTotalValue] = useState<number>(0);
+  const [message, setMessage] = useState<string>(
+    "Craft some items together and see what happens!",
+  );
 
   useEffect(() => {
+    // Get the starting elements
     axios.get("http://127.0.0.1:8000/api/start").then(({ data }) => {
       setElements(data.elements);
     });
+    // Get the number of steps
+    axios.get("http://127.0.0.1:8000/api/n-steps").then(({ data }) => {
+      setRemainingSteps(data.n_steps);
+    });
   }, []);
 
-  useEffect(() => {
-    if (elements.length === 0) return;
-    localStorage.setItem("elements", JSON.stringify(elements));
-  }, [elements]);
-
   const handleDragStart = (event: any) => {
-    console.log("start event", event);
     const { active } = event;
 
     if (active.data.current.type === "element") {
@@ -41,7 +45,15 @@ export default function Home() {
     e1: PlacedElement,
     e2: PlacedElement | Element,
   ) => {
+    if (remainingSteps === 0) {
+      return;
+    }
+
     if ("id" in e2) {
+      // clicking one element isn't a craft
+      if (e1.id === e2.id) {
+        return;
+      }
       // Remove e2 and set e1 to loading
       setPlacedElements((prev) =>
         prev
@@ -90,8 +102,13 @@ export default function Home() {
         );
         // If the created element is new, add it to the elements list
         if (elements.every((element) => element.text !== data.element.text)) {
+          setMessage(
+            `You discovered ${data.element.text} with value ${data.element.value}`,
+          );
+          setTotalValue((prev) => prev + data.element.value);
           setElements((prev) => [...prev, data.element]);
         }
+        setRemainingSteps(remainingSteps !== null ? remainingSteps - 1 : null);
       })
       .catch((e) => {
         window.alert(
@@ -112,9 +129,6 @@ export default function Home() {
 
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
-
-    console.log("active", active);
-    console.log("over", over);
 
     if (
       active.data.current.type === "placed-element" &&
@@ -168,11 +182,19 @@ export default function Home() {
         elementRect = target.parentElement.getBoundingClientRect();
       }
 
+      const rootElement = document.querySelector("#root");
+      let rootRect;
+      if (!rootElement) {
+        rootRect = { top: 0, left: 0 };
+      } else {
+        rootRect = rootElement.getBoundingClientRect();
+      }
+
       const placedElement = {
         ...element,
         id: uuid(),
-        x: elementRect.left,
-        y: elementRect.top,
+        x: elementRect.left - rootRect.left,
+        y: elementRect.top - rootRect.top,
       };
       setPlacedElements((prev) => [...prev, placedElement]);
     } else if (
@@ -196,7 +218,7 @@ export default function Home() {
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <main className="flex h-screen flex-col border-4 border-black">
+      <main className="flex h-[70vh] flex-col border-2 border-black">
         <div className="grid grid-cols-12 h-full">
           <PlaygroundArea
             setElements={setElements}
@@ -205,6 +227,11 @@ export default function Home() {
             isLoading={isLoading}
           />
           <SideBar elements={elements} isLoading={isLoading} />
+        </div>
+        <div className="absolute text-xl p-2 -z-10">
+          <div>{remainingSteps} actions left</div>
+          <div>Total value: {totalValue}</div>
+          <div>{message}</div>
         </div>
       </main>
       <DragOverlay dropAnimation={null}>

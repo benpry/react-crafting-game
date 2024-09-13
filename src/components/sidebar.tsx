@@ -18,19 +18,19 @@ export const SideBar = ({
   });
 
   return (
-    <div
-      className="col-span-3 border-l h-screen flex flex-col"
-      ref={setNodeRef}
-    >
-      <div className="flex flex-1 justify-start items-start overflow-y-scroll overflow-x-hidden">
-        <div className="flex flex-wrap gap-2 p-2">
-          {elements.map((element) => (
-            <ElementCardSideBarWrapper
-              key={element.text}
-              element={element}
-              isLoading={isLoading}
-            />
-          ))}
+    <div className="col-span-3 border-l relative" ref={setNodeRef}>
+      <div className="absolute inset-0 flex flex-col">
+        <h2 className="text-lg text-center font-semibold">Inventory</h2>
+        <div className="overflow-y-auto flex-1">
+          <div className="flex flex-wrap gap-2 p-2">
+            {elements.map((element) => (
+              <ElementCardSideBarWrapper
+                key={element.text}
+                element={element}
+                isLoading={isLoading}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

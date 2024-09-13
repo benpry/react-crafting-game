@@ -7,7 +7,10 @@ import { useMemo } from "react";
 export const ElementCard = ({ element }: { element: Element }) => {
   return (
     <div className="flex gap-2 p-2 border border-slate-400 rounded-md text-xl h-fit w-fit hover:bg-gradient-to-t from-cyan-100 to-white">
-      <img className="w-8 h-8" src={`public/assets/${element.image}.svg`}></img>
+      <img
+        className="w-8 h-8"
+        src={`/static/item-images/${element.image}.svg`}
+      ></img>
       <div>{element.text}</div>
     </div>
   );
