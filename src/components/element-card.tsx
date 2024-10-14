@@ -5,8 +5,12 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMemo } from "react";
 
 export const ElementCard = ({ element }: { element: Element }) => {
+  const bgColor = element.discovered ? "bg-white" : "bg-slate-200";
+  const toColor = element.discovered ? "to-white" : `to-slate-200`;
+  const classes = `flex gap-2 p-2 border ${bgColor} border-slate-400 rounded-md text-xl h-fit w-fit hover:bg-gradient-to-t from-cyan-100 to-${toColor}`;
+
   return (
-    <div className="flex gap-2 p-2 border border-slate-400 rounded-md text-xl h-fit w-fit hover:bg-gradient-to-t from-cyan-100 to-white">
+    <div className={classes} id={element.id}>
       <img
         className="w-8 h-8"
         src={`/static/item-images/${element.image}.svg`}

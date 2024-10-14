@@ -14,6 +14,7 @@ export default function Home() {
   const [activeElement, setActiveElement] = useState<Element | null>(null);
   const [activePlacedElement, setActivePlacedElement] =
     useState<PlacedElement | null>(null);
+  const [shaking, setShaking] = useState<string>([]);
   const [remainingSteps, setRemainingSteps] = useState<number | null>(null);
   const [totalValue, setTotalValue] = useState<number>(0);
   const [message, setMessage] = useState<string>(
@@ -31,6 +32,24 @@ export default function Home() {
     });
   }, []);
 
+  useEffect(() => {
+    placedElements.forEach((e) => {
+      const element = document.getElementById(e.id);
+      if (!element) {
+        return;
+      }
+
+      if (shaking.includes(e.id)) {
+        console.log("trying id", e.id);
+        if (element) {
+          element.classList.add("shake");
+        }
+      } else if (element.classList.contains("shake")) {
+        element.classList.remove("shake");
+      }
+    });
+  }, [shaking, placedElements]);
+
   const handleDragStart = (event: any) => {
     const { active } = event;
 
@@ -41,51 +60,71 @@ export default function Home() {
     }
   };
 
-  const handleCombineElements = (
+  const shakeAnimation = (
     e1: PlacedElement,
     e2: PlacedElement | Element,
+    rect,
   ) => {
+    setShaking([e1.id, e2.id]);
+    setTimeout(() => {
+      setShaking(shaking.filter((v) => v !== e1.id && v !== e2.id));
+    }, 500);
+  };
+
+  const handleCombineElements = (
+    e1: PlacedElement,
+    e2: PlacedElement,
+    rect,
+  ) => {
+    // we can't combine elements if there are no steps left
+    // and clicking an element doesn't count as a craft
+    console.log("e1", e1);
+    console.log("e2", e2);
     if (remainingSteps === 0) {
       return;
     }
 
-    if ("id" in e2) {
-      // clicking one element isn't a craft
-      if (e1.id === e2.id) {
-        return;
-      }
-      // Remove e2 and set e1 to loading
-      setPlacedElements((prev) =>
-        prev
-          .filter((v) => v.id !== e2.id)
-          .map((v) =>
-            v.id === e1.id
-              ? {
-                  ...v,
-                  isLoading: true,
-                }
-              : v,
-          ),
-      );
-    } else {
-      setPlacedElements((prev) =>
-        prev.map((v) =>
-          v.id === e1.id
-            ? {
-                ...v,
-                isLoading: true,
-              }
-            : v,
-        ),
-      );
-    }
-
+    // try combining the elements
     axios
       .post("http://127.0.0.1:8000/api/combine", {
         item1: e1.text,
         item2: e2.text,
       })
       .then(({ data }) => {
+        setRemainingSteps(remainingSteps !== null ? remainingSteps - 1 : null);
+        console.log("got result", data.element);
+        if (data.element.text === "junk") {
+          shakeAnimation(e1, e2, rect);
+          return;
+        }
+
+        if ("id" in e2) {
+          // Remove e2 and set e1 to loading
+          setPlacedElements((prev) =>
+            prev
+              .filter((v) => v.id !== e2.id)
+              .map((v) =>
+                v.id === e1.id
+                  ? {
+                      ...v,
+                      isLoading: true,
+                    }
+                  : v,
+              ),
+          );
+        } else {
+          setPlacedElements((prev) =>
+            prev.map((v) =>
+              v.id === e1.id
+                ? {
+                    ...v,
+                    isLoading: true,
+                  }
+                : v,
+            ),
+          );
+        }
+
         setPlacedElements((prev) =>
           // Replace e1 with the new element
           prev.map((v) =>
@@ -108,7 +147,6 @@ export default function Home() {
           setTotalValue((prev) => prev + data.element.value);
           setElements((prev) => [...prev, data.element]);
         }
-        setRemainingSteps(remainingSteps !== null ? remainingSteps - 1 : null);
       })
       .catch((e) => {
         window.alert(
@@ -130,10 +168,10 @@ export default function Home() {
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
+    let placedElement;
     if (
       active.data.current.type === "placed-element" &&
-      over &&
-      over.data.current.type === "sidebar"
+      (!over || over.data.current.type === "sidebar")
     ) {
       // remove the element from the game
       const element = active.data.current.element;
@@ -141,35 +179,23 @@ export default function Home() {
         (v) => v.id !== element.id,
       );
       setPlacedElements(newPlacedElements);
-    } else if (
-      active.data.current.type === "placed-element" &&
-      over &&
-      over.data.current.type === "placed-element"
-    ) {
-      // combine the elements
-      handleCombineElements(
-        over.data.current.element,
-        active.data.current.element,
-      );
     } else if (active.data.current.type === "placed-element") {
-      // place the already-placed element on the playground
+      // move the already-placed element elsewhere on the playground
       const element = active.data.current.element;
-      const newPlacedElements = placedElements.map((v) =>
-        v.id === element.id
-          ? {
-              ...element,
-              x: element.x + event.delta.x,
-              y: element.y + event.delta.y,
-            }
-          : v,
-      );
+      placedElement = {
+        ...element,
+        x: element.x + event.delta.x,
+        y: element.y + event.delta.y,
+      };
+      const newPlacedElements = [
+        ...placedElements.filter((v) => v.id !== placedElement.id),
+        placedElement,
+      ];
       setPlacedElements(newPlacedElements);
-    }
-
-    if (
+    } else if (
       active.data.current.type === "element" &&
       over &&
-      over.data.current.type === "playground"
+      over.data.current.type !== "sidebar"
     ) {
       const element = active.data.current.element;
       // get the bounding box
@@ -190,22 +216,21 @@ export default function Home() {
         rootRect = rootElement.getBoundingClientRect();
       }
 
-      const placedElement = {
+      placedElement = {
         ...element,
         id: uuid(),
         x: elementRect.left - rootRect.left,
         y: elementRect.top - rootRect.top,
       };
       setPlacedElements((prev) => [...prev, placedElement]);
-    } else if (
-      active.data.current.type === "element" &&
-      over &&
-      over.data.current.type === "placed-element"
-    ) {
-      handleCombineElements(
-        over.data.current.element,
-        active.data.current.element,
-      );
+    }
+
+    if (placedElement && over && over.data.current.type === "placed-element") {
+      // combine the elements
+      if (over.data.current.element.id !== placedElement.id) {
+        console.log("combining elements");
+        handleCombineElements(over.data.current.element, placedElement);
+      }
     }
 
     setActiveElement(null);
