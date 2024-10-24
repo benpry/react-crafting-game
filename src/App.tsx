@@ -14,7 +14,7 @@ export default function Home() {
   const [activeElement, setActiveElement] = useState<Element | null>(null);
   const [activePlacedElement, setActivePlacedElement] =
     useState<PlacedElement | null>(null);
-  const [shaking, setShaking] = useState<string>([]);
+  const [shaking, setShaking] = useState<string[]>([]);
   const [remainingSteps, setRemainingSteps] = useState<number | null>(null);
   const [totalValue, setTotalValue] = useState<number>(0);
   const [message, setMessage] = useState<string>(
@@ -60,22 +60,14 @@ export default function Home() {
     }
   };
 
-  const shakeAnimation = (
-    e1: PlacedElement,
-    e2: PlacedElement | Element,
-    rect,
-  ) => {
+  const shakeAnimation = (e1: PlacedElement, e2: PlacedElement) => {
     setShaking([e1.id, e2.id]);
     setTimeout(() => {
       setShaking(shaking.filter((v) => v !== e1.id && v !== e2.id));
     }, 500);
   };
 
-  const handleCombineElements = (
-    e1: PlacedElement,
-    e2: PlacedElement,
-    rect,
-  ) => {
+  const handleCombineElements = (e1: PlacedElement, e2: PlacedElement) => {
     // we can't combine elements if there are no steps left
     // and clicking an element doesn't count as a craft
     console.log("e1", e1);
@@ -93,8 +85,8 @@ export default function Home() {
       .then(({ data }) => {
         setRemainingSteps(remainingSteps !== null ? remainingSteps - 1 : null);
         console.log("got result", data.element);
-        if (data.element.text === "junk") {
-          shakeAnimation(e1, e2, rect);
+        if (data.element === null) {
+          shakeAnimation(e1, e2);
           return;
         }
 
@@ -168,7 +160,15 @@ export default function Home() {
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
 
-    let placedElement;
+    let placedElement: PlacedElement = {
+      id: "",
+      x: 0,
+      y: 0,
+      text: "",
+      image: "",
+      discovered: false,
+      value: 0,
+    };
     if (
       active.data.current.type === "placed-element" &&
       (!over || over.data.current.type === "sidebar")
@@ -225,7 +225,11 @@ export default function Home() {
       setPlacedElements((prev) => [...prev, placedElement]);
     }
 
-    if (placedElement && over && over.data.current.type === "placed-element") {
+    if (
+      placedElement.id !== "" &&
+      over &&
+      over.data.current.type === "placed-element"
+    ) {
       // combine the elements
       if (over.data.current.element.id !== placedElement.id) {
         console.log("combining elements");
@@ -246,7 +250,6 @@ export default function Home() {
       <main className="flex h-[70vh] flex-col border-2 border-black">
         <div className="grid grid-cols-12 h-full">
           <PlaygroundArea
-            setElements={setElements}
             setPlacedElements={setPlacedElements}
             placedElements={placedElements}
             isLoading={isLoading}

@@ -3,14 +3,20 @@ import { Element, PlacedElement } from "../interfaces/element";
 import { Loader } from "lucide-react";
 import { CSS } from "@dnd-kit/utilities";
 import { useMemo } from "react";
+import { isPlacedElement } from "../interfaces/element";
 
-export const ElementCard = ({ element }: { element: Element }) => {
+export const ElementCard = ({
+  element,
+}: {
+  element: Element | PlacedElement;
+}) => {
   const bgColor = element.discovered ? "bg-white" : "bg-slate-200";
   const toColor = element.discovered ? "to-white" : `to-slate-200`;
   const classes = `flex gap-2 p-2 border ${bgColor} border-slate-400 rounded-md text-xl h-fit w-fit hover:bg-gradient-to-t from-cyan-100 to-${toColor}`;
+  const id = isPlacedElement(element) ? element.id : undefined;
 
   return (
-    <div className={classes} id={element.id}>
+    <div className={classes} id={id}>
       <img
         className="w-8 h-8"
         src={`/static/item-images/${element.image}.svg`}

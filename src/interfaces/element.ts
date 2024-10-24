@@ -11,3 +11,7 @@ export interface PlacedElement extends Element {
     y: number;
     isLoading?: boolean;
 }
+
+export function isPlacedElement(object: any): object is PlacedElement {
+    return "id" in object && "x" in object && "y" in object;
+}

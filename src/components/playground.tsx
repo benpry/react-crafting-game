@@ -1,15 +1,16 @@
 "use client";
-import { Element, PlacedElement } from "../interfaces/element";
+import { PlacedElement } from "../interfaces/element";
 import { ElementCardDraggableWrapper } from "./element-card";
 import { useDroppable } from "@dnd-kit/core";
+import { Trash } from "lucide-react";
 
 export const PlaygroundArea = ({
   placedElements,
+  setPlacedElements,
   isLoading,
 }: {
   placedElements: PlacedElement[];
   setPlacedElements: (v: PlacedElement[]) => void;
-  setElements: (v: Element[]) => void;
   isLoading: boolean;
 }) => {
   const { setNodeRef } = useDroppable({
@@ -20,6 +21,10 @@ export const PlaygroundArea = ({
     disabled: isLoading,
   });
 
+  const onClearPlacedElements = () => {
+    setPlacedElements([]);
+  };
+
   return (
     <div className="col-span-9 h-full w-full relative" ref={setNodeRef}>
       {placedElements.map((element, index) => (
@@ -29,6 +34,12 @@ export const PlaygroundArea = ({
           isLoading={isLoading}
         />
       ))}
+      <div
+        className="absolute bottom-0 right-0 p-4 cursor-pointer hover:text-red-400"
+        onClick={onClearPlacedElements}
+      >
+        <Trash />
+      </div>
     </div>
   );
 };
