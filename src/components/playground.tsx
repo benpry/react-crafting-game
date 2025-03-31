@@ -26,7 +26,7 @@ export const PlaygroundArea = ({
   };
 
   return (
-    <div className="col-span-9 h-full w-full relative" ref={setNodeRef}>
+    <div className="col-span-8 h-full w-full relative" ref={setNodeRef}>
       {placedElements.map((element, index) => (
         <ElementCardDraggableWrapper
           key={index}

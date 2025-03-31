@@ -50,6 +50,13 @@ export default function Home() {
     });
   }, [shaking, placedElements]);
 
+  useEffect(() => {
+    if (remainingSteps === 0) {
+      setMessage("You have used all your actions! Press 'Next' to continue.");
+      alert("You have used all your actions! Press 'Next' to continue.");
+    }
+  }, [remainingSteps]);
+
   const handleDragStart = (event: any) => {
     const { active } = event;
 
@@ -84,7 +91,6 @@ export default function Home() {
       })
       .then(({ data }) => {
         setRemainingSteps(remainingSteps !== null ? remainingSteps - 1 : null);
-        console.log("got result", data.element);
         if (data.element === null) {
           shakeAnimation(e1, e2);
           return;
@@ -166,7 +172,6 @@ export default function Home() {
       y: 0,
       text: "",
       image: "",
-      discovered: false,
       value: 0,
     };
     if (
@@ -258,8 +263,8 @@ export default function Home() {
         </div>
         <div className="absolute text-xl p-2 -z-10">
           <div>{remainingSteps} actions left</div>
-          <div>Total value: {totalValue}</div>
           <div>{message}</div>
+          <div>total: {totalValue}</div>
         </div>
       </main>
       <DragOverlay dropAnimation={null}>

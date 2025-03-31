@@ -18,7 +18,7 @@ export const SideBar = ({
   });
 
   return (
-    <div className="col-span-3 border-l relative" ref={setNodeRef}>
+    <div className="col-span-4 border-l relative" ref={setNodeRef}>
       <div className="absolute inset-0 flex flex-col">
         <h2 className="text-lg text-center font-semibold">Inventory</h2>
         <div className="overflow-y-auto flex-1">

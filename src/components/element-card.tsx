@@ -5,23 +5,43 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMemo } from "react";
 import { isPlacedElement } from "../interfaces/element";
 
+const bgColorsByValue: { [index: number]: string } = {
+  0: "bg-slate-200",
+  1: "bg-white",
+  2: "bg-green-300",
+  3: "bg-sky-400",
+  4: "bg-violet-400",
+  5: "bg-amber-300",
+};
+
+const toColorsByValue: { [index: number]: string } = {
+  0: "to-slate-200",
+  1: "to-white",
+  2: "to-green-300",
+  3: "to-sky-400",
+  4: "to-violet-400",
+  5: "to-amber-300",
+};
+
 export const ElementCard = ({
   element,
 }: {
   element: Element | PlacedElement;
 }) => {
-  const bgColor = element.discovered ? "bg-white" : "bg-slate-200";
-  const toColor = element.discovered ? "to-white" : `to-slate-200`;
-  const classes = `flex gap-2 p-2 border ${bgColor} border-slate-400 rounded-md text-xl h-fit w-fit hover:bg-gradient-to-t from-cyan-100 to-${toColor}`;
+  const bgColor = bgColorsByValue[element.value];
+  const toColor = toColorsByValue[element.value];
+  const fixedClasses = `flex gap-2 p-2 border ${bgColor} border-slate-400 rounded-md text-xl h-fit w-fit hover:bg-gradient-to-t from-cyan-100 ${toColor}`;
+
+  const classes = `${fixedClasses} hover:bg-cyan-100`;
   const id = isPlacedElement(element) ? element.id : undefined;
 
   return (
     <div className={classes} id={id}>
       <img
-        className="w-8 h-8"
+        className="w-6 h-6"
         src={`/static/item-images/${element.image}.svg`}
       ></img>
-      <div>{element.text}</div>
+      <div className="pointer-events-none">{element.text}</div>
     </div>
   );
 };
@@ -78,7 +98,7 @@ export const ElementCardDraggableWrapper = ({
     disabled: isLoading,
   });
 
-  const { isOver, setNodeRef: setNodeRef2 } = useDroppable({
+  const { setNodeRef: setNodeRef2 } = useDroppable({
     id: element.id,
     data: {
       element,
@@ -96,9 +116,7 @@ export const ElementCardDraggableWrapper = ({
     [element.x, element.y, transform],
   );
 
-  const classes = isOver
-    ? "absolute w-fit h-fit bg-gradient-to-t from-cyan-100 to-white"
-    : "absolute w-fit h-fit";
+  const classes = "absolute w-fit h-fit";
 
   return (
     <div

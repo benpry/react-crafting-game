@@ -37,7 +37,6 @@ async def combine(body: CraftMessageBody):
                 "image": result["image"],
                 "text": result["text"],
                 "value": result["value"],
-                "discovered": True,
             },
         }
 
@@ -51,4 +50,4 @@ async def get_starting_elements():
 @app.get("/api/n-steps")
 async def get_n_steps():
 
-    return {"n_steps": 1000}
+    return {"n_steps": 100}
