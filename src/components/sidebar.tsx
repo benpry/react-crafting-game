@@ -25,7 +25,7 @@ export const SideBar = ({
           <div className="flex flex-wrap gap-2 p-2">
             {elements.map((element) => (
               <ElementCardSideBarWrapper
-                key={element.text}
+                key={element.name}
                 element={element}
                 isLoading={isLoading}
               />

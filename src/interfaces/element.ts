@@ -1,7 +1,8 @@
 export interface Element {
-    text: string;
-    image: string;
+    name: string;
+    emoji: string;
     value: number;
+    consumable: boolean;
 }
 
 export interface PlacedElement extends Element {

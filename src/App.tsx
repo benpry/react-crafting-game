@@ -20,16 +20,20 @@ export default function Home() {
   const [message, setMessage] = useState<string>(
     "Craft some items together and see what happens!",
   );
+  const [gameId, setGameId] = useState<string | null>(null);
 
   useEffect(() => {
     // Get the starting elements
-    axios.get("http://127.0.0.1:8000/api/start").then(({ data }) => {
-      setElements(data.elements);
+    axios.get("http://127.0.0.1:8000/init").then(({ data }) => {
+      console.log("init data")
+      setElements(data.inventory);
+      setGameId(data.game_id);
     });
     // Get the number of steps
-    axios.get("http://127.0.0.1:8000/api/n-steps").then(({ data }) => {
-      setRemainingSteps(data.n_steps);
-    });
+    // axios.get("http://127.0.0.1:8000/api/n-steps").then(({ data }) => {
+    //   setRemainingSteps(data.n_steps);
+    // });
+    setRemainingSteps(100);
   }, []);
 
   useEffect(() => {
@@ -83,68 +87,18 @@ export default function Home() {
       return;
     }
 
+    console.log("gameId", gameId);
+
     // try combining the elements
     axios
-      .post("http://127.0.0.1:8000/api/combine", {
-        item1: e1.text,
-        item2: e2.text,
+      .post("http://127.0.0.1:8000/step", {
+          game_id: gameId,
+          action: [e1.name, e2.name],
       })
       .then(({ data }) => {
         setRemainingSteps(remainingSteps !== null ? remainingSteps - 1 : null);
-        if (data.element === null) {
-          shakeAnimation(e1, e2);
-          return;
-        }
-
-        if ("id" in e2) {
-          // Remove e2 and set e1 to loading
-          setPlacedElements((prev) =>
-            prev
-              .filter((v) => v.id !== e2.id)
-              .map((v) =>
-                v.id === e1.id
-                  ? {
-                      ...v,
-                      isLoading: true,
-                    }
-                  : v,
-              ),
-          );
-        } else {
-          setPlacedElements((prev) =>
-            prev.map((v) =>
-              v.id === e1.id
-                ? {
-                    ...v,
-                    isLoading: true,
-                  }
-                : v,
-            ),
-          );
-        }
-
-        setPlacedElements((prev) =>
-          // Replace e1 with the new element
-          prev.map((v) =>
-            v.id === e1.id
-              ? {
-                  ...data.element,
-                  id: uuid(),
-                  x: v.x,
-                  y: v.y,
-                  isLoading: false,
-                }
-              : v,
-          ),
-        );
-        // If the created element is new, add it to the elements list
-        if (elements.every((element) => element.text !== data.element.text)) {
-          setMessage(
-            `You discovered ${data.element.text} with value ${data.element.value}`,
-          );
-          setTotalValue((prev) => prev + data.element.value);
-          setElements((prev) => [...prev, data.element]);
-        }
+        setElements(data.inventory);
+        setPlacedElements([]);
       })
       .catch((e) => {
         window.alert(
@@ -170,9 +124,10 @@ export default function Home() {
       id: "",
       x: 0,
       y: 0,
-      text: "",
-      image: "",
+      name: "",
+      emoji: "",
       value: 0,
+      consumable: false,
     };
     if (
       active.data.current.type === "placed-element" &&
@@ -184,6 +139,10 @@ export default function Home() {
         (v) => v.id !== element.id,
       );
       setPlacedElements(newPlacedElements);
+      // if the element is consumable, we need to add it back to the inventory
+      if (element.consumable) {
+        setElements([...elements, element]);
+      }
     } else if (active.data.current.type === "placed-element") {
       // move the already-placed element elsewhere on the playground
       const element = active.data.current.element;
@@ -228,6 +187,10 @@ export default function Home() {
         y: elementRect.top - rootRect.top,
       };
       setPlacedElements((prev) => [...prev, placedElement]);
+      // if the element is consumable, we need to remove it from the inventory
+      if (element.consumable) {
+        setElements(elements.filter((v) => v.name !== element.name));
+      }
     }
 
     if (
@@ -260,11 +223,6 @@ export default function Home() {
             isLoading={isLoading}
           />
           <SideBar elements={elements} isLoading={isLoading} />
-        </div>
-        <div className="absolute text-xl p-2 -z-10">
-          <div>{remainingSteps} actions left</div>
-          <div>{message}</div>
-          <div>total: {totalValue}</div>
         </div>
       </main>
       <DragOverlay dropAnimation={null}>

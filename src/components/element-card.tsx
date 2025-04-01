@@ -5,31 +5,13 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMemo } from "react";
 import { isPlacedElement } from "../interfaces/element";
 
-const bgColorsByValue: { [index: number]: string } = {
-  0: "bg-slate-200",
-  1: "bg-white",
-  2: "bg-green-300",
-  3: "bg-sky-400",
-  4: "bg-violet-400",
-  5: "bg-amber-300",
-};
-
-const toColorsByValue: { [index: number]: string } = {
-  0: "to-slate-200",
-  1: "to-white",
-  2: "to-green-300",
-  3: "to-sky-400",
-  4: "to-violet-400",
-  5: "to-amber-300",
-};
-
 export const ElementCard = ({
   element,
 }: {
   element: Element | PlacedElement;
 }) => {
-  const bgColor = bgColorsByValue[element.value];
-  const toColor = toColorsByValue[element.value];
+  const bgColor = element.consumable ? "bg-white" : "bg-slate-200";
+  const toColor = element.consumable ? "to-white" : "to-slate-200";
   const fixedClasses = `flex gap-2 p-2 border ${bgColor} border-slate-400 rounded-md text-xl h-fit w-fit hover:bg-gradient-to-t from-cyan-100 ${toColor}`;
 
   const classes = `${fixedClasses} hover:bg-cyan-100`;
@@ -37,11 +19,8 @@ export const ElementCard = ({
 
   return (
     <div className={classes} id={id}>
-      <img
-        className="w-6 h-6"
-        src={`/static/item-images/${element.image}.svg`}
-      ></img>
-      <div className="pointer-events-none">{element.text}</div>
+      <div className="pointer-events-none">{element.emoji} {element.name}</div>
+      <div className="pointer-events-none">{element.value}</div>
     </div>
   );
 };
@@ -54,7 +33,7 @@ export const ElementCardSideBarWrapper = ({
   isLoading: boolean;
 }) => {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: element.text,
+    id: element.name,
     data: {
       element,
       type: "element",
