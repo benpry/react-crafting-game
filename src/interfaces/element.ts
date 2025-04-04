@@ -2,7 +2,7 @@ export interface Element {
     name: string;
     emoji: string;
     value: number;
-    consumable: boolean;
+    durable: boolean;
 }
 
 export interface PlacedElement extends Element {

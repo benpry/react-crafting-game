@@ -15,11 +15,6 @@ export default function Home() {
   const [activePlacedElement, setActivePlacedElement] =
     useState<PlacedElement | null>(null);
   const [shaking, setShaking] = useState<string[]>([]);
-  const [remainingSteps, setRemainingSteps] = useState<number | null>(null);
-  const [totalValue, setTotalValue] = useState<number>(0);
-  const [message, setMessage] = useState<string>(
-    "Craft some items together and see what happens!",
-  );
   const [gameId, setGameId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -29,11 +24,6 @@ export default function Home() {
       setElements(data.inventory);
       setGameId(data.game_id);
     });
-    // Get the number of steps
-    // axios.get("http://127.0.0.1:8000/api/n-steps").then(({ data }) => {
-    //   setRemainingSteps(data.n_steps);
-    // });
-    setRemainingSteps(100);
   }, []);
 
   useEffect(() => {
@@ -54,13 +44,6 @@ export default function Home() {
     });
   }, [shaking, placedElements]);
 
-  useEffect(() => {
-    if (remainingSteps === 0) {
-      setMessage("You have used all your actions! Press 'Next' to continue.");
-      alert("You have used all your actions! Press 'Next' to continue.");
-    }
-  }, [remainingSteps]);
-
   const handleDragStart = (event: any) => {
     const { active } = event;
 
@@ -71,34 +54,61 @@ export default function Home() {
     }
   };
 
-  const shakeAnimation = (e1: PlacedElement, e2: PlacedElement) => {
-    setShaking([e1.id, e2.id]);
-    setTimeout(() => {
-      setShaking(shaking.filter((v) => v !== e1.id && v !== e2.id));
-    }, 500);
-  };
-
   const handleCombineElements = (e1: PlacedElement, e2: PlacedElement) => {
     // we can't combine elements if there are no steps left
-    // and clicking an element doesn't count as a craft
-    console.log("e1", e1);
-    console.log("e2", e2);
-    if (remainingSteps === 0) {
-      return;
+
+    // place the element
+    if ("id" in e2) {
+      // Remove e2 and set e1 to loading
+      setPlacedElements((prev) =>
+        prev
+          .filter((v) => v.id !== e2.id)
+          .map((v) =>
+            v.id === e1.id
+              ? {
+                  ...v,
+                  isLoading: true,
+                }
+              : v,
+          ),
+      );
+    } else {
+      setPlacedElements((prev) =>
+        prev.map((v) =>
+          v.id === e1.id
+            ? {
+                ...v,
+                isLoading: true,
+              }
+            : v,
+        ),
+      );
     }
 
-    console.log("gameId", gameId);
-
-    // try combining the elements
     axios
       .post("http://127.0.0.1:8000/step", {
           game_id: gameId,
           action: [e1.name, e2.name],
       })
       .then(({ data }) => {
-        setRemainingSteps(remainingSteps !== null ? remainingSteps - 1 : null);
-        setElements(data.inventory);
-        setPlacedElements([]);
+
+        // Get the item that's in the inventory but not the current element or placed element
+        const newItem = data.new_item
+
+        setPlacedElements((prev) =>
+          // Replace e1 with the new element
+          prev.map((v) =>
+            v.id === e1.id
+              ? {
+                  ...newItem,
+                  id: uuid(),
+                  x: v.x,
+                  y: v.y,
+                  isLoading: false,
+                }
+              : v,
+          ),
+        );
       })
       .catch((e) => {
         window.alert(
@@ -127,7 +137,7 @@ export default function Home() {
       name: "",
       emoji: "",
       value: 0,
-      consumable: false,
+      durable: false,
     };
     if (
       active.data.current.type === "placed-element" &&
@@ -139,8 +149,8 @@ export default function Home() {
         (v) => v.id !== element.id,
       );
       setPlacedElements(newPlacedElements);
-      // if the element is consumable, we need to add it back to the inventory
-      if (element.consumable) {
+      // if the element is not durable, we need to add it back to the inventory
+      if (!element.durable) {
         setElements([...elements, element]);
       }
     } else if (active.data.current.type === "placed-element") {
@@ -187,8 +197,8 @@ export default function Home() {
         y: elementRect.top - rootRect.top,
       };
       setPlacedElements((prev) => [...prev, placedElement]);
-      // if the element is consumable, we need to remove it from the inventory
-      if (element.consumable) {
+      // if the element is not durable, we need to remove it from the inventory
+      if (!element.durable) {
         setElements(elements.filter((v) => v.name !== element.name));
       }
     }

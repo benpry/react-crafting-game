@@ -10,8 +10,8 @@ export const ElementCard = ({
 }: {
   element: Element | PlacedElement;
 }) => {
-  const bgColor = element.consumable ? "bg-white" : "bg-slate-200";
-  const toColor = element.consumable ? "to-white" : "to-slate-200";
+  const bgColor = element.durable ? "bg-slate-200" : "bg-white";
+  const toColor = element.durable ? "to-slate-200" : "to-white";
   const fixedClasses = `flex gap-2 p-2 border ${bgColor} border-slate-400 rounded-md text-xl h-fit w-fit hover:bg-gradient-to-t from-cyan-100 ${toColor}`;
 
   const classes = `${fixedClasses} hover:bg-cyan-100`;
@@ -107,11 +107,11 @@ export const ElementCardDraggableWrapper = ({
     >
       <div ref={setNodeRef2}>
         {element.isLoading && (
-          <div className="flex gap-2 px-2 border rounded-xl h-fit w-fit">
+          <div className="flex gap-2 p-2 border bg-white border-slate-400 rounded-md text-xl h-fit w-fit">
             <div>
               <Loader className="animate-spin inline-block" />
             </div>
-            <div>combining</div>
+            <div>combining...</div>
           </div>
         )}
         {!element.isLoading && <ElementCard element={element} />}
