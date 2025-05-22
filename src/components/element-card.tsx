@@ -20,7 +20,9 @@ export const ElementCard = ({
   return (
     <div className={classes} id={id}>
       <div className="pointer-events-none">{element.emoji} {element.name}</div>
-      <div className="pointer-events-none">{element.value}</div>
+      {!element.durable ? 
+        <div className="pointer-events-none">{element.value}</div>
+      : null}
     </div>
   );
 };

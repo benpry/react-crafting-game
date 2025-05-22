@@ -109,6 +109,11 @@ export default function Home() {
               : v,
           ),
         );
+        
+        // if the new item is durable, add it to the inventory
+        if (newItem.durable) {
+          setElements([...elements, newItem]);
+        }
       })
       .catch((e) => {
         window.alert(
